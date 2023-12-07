@@ -6,26 +6,26 @@ from selenium.common.exceptions import TimeoutException
 from bs4 import BeautifulSoup
 import time
 
-decades_id = {}
-years_id = {}
+URL = 'https://dl.acm.org/loi/cacm/group/'
+
+years_data_urls = []
 
 driver = webdriver.Chrome()
-driver.get('https://dl.acm.org/loi/cacm/group/')
-# driver.implicitly_wait(10)
-
+driver.get(URL)
+driver.implicitly_wait(2)
 dec_panel = driver.find_element(By.CLASS_NAME, 'scroll')
 dec_elems = dec_panel.find_elements(By.TAG_NAME, 'li')
 
-for elem in dec_elems:
-    decades_id[elem.find_element(By.TAG_NAME, 'a').get_attribute('title')] = elem.find_element(By.TAG_NAME, 'a').get_attribute('id')
+for du in driver.find_elements(By.CLASS_NAME, 'scroll')[1:len(dec_elems)+1]:
+    for year in du.find_elements(By.TAG_NAME, 'li'):
+        years_data_urls.append(year.find_element(By.TAG_NAME, "a").get_attribute("data-url"))
 
-dec_panel_parent = dec_panel.find_element(By.XPATH, './..')
+print(years_data_urls)
+# for data_url in years_data_urls:
+#     driver.get(f'{URL}{years_data_urls}')
 
-years_panel = dec_panel_parent.find_element(By.XPATH, "following-sibling::*[1]").find_element(By.CLASS_NAME, 'scroll')
-years_elems = years_panel.find_elements(By.TAG_NAME, 'li')
+#     if len(driver.find_elements(By.ID, 'CybotCookiebotDialogBody')) != 0:
+#         WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.ID, 'CybotCookiebotDialogBodyLevelButtonLevelOptinDeclineAll'))).click()
+        
 
-for elem in years_elems:
-    years_id[elem.find_element(By.TAG_NAME, 'a').get_attribute('title')] = elem.find_element(By.TAG_NAME, 'a').get_attribute('id')
-
-print(years_id)
 driver.close()
