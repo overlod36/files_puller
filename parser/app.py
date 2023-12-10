@@ -1,12 +1,17 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from datetime import datetime
+from pathlib import Path
+import os
 import json
 
+PATH = os.path.dirname(os.path.abspath(__file__))
 URL = 'https://dl.acm.org/loi/cacm/group/'
 
 years_data_urls = []
-journals = {}
+journals = []
 
 driver = webdriver.Chrome()
 driver.get(URL)
@@ -37,7 +42,9 @@ for data_url in years_data_urls:
     # заполняем предварительный список журналов текущего года
     for journal in content:
         current_year_journals.append({'href': journal.find_element(By.TAG_NAME, 'a').get_attribute('href'),
-                                     'title': f'{journal.find_element(By.CLASS_NAME, "coverDate").text}, {journal.find_element(By.CLASS_NAME, "issue").text}'})
+                                     'title': f'{journal.find_element(By.CLASS_NAME, "coverDate").text}, {journal.find_element(By.CLASS_NAME, "issue").text}',
+                                     'decade': data_url[1:5],
+                                     'year': data_url[7:11]})
     
     # заходим на каждую страницу журнала, записываем ссылки на все доступные статьи
     for sp_journal in current_year_journals:
@@ -49,14 +56,14 @@ for data_url in years_data_urls:
             file_details = j_el.find_element(By.CLASS_NAME, 'issue-item__detail').find_element(By.TAG_NAME, 'a').text
             articles.append({file_name: file_details})
         sp_journal['articles'] = articles
-    
     # сохраняем статьи и прикрепляем их к журналу
-    journals[data_url] = current_year_journals
+    journals.append(current_year_journals)
+    break
 
 result = json.dumps(journals, indent=4)
 
 # запись в файл
-with open(f'results/{datetime.now().strftime("%H%M%S%f")}.json', 'w') as file:
+with open(f'{Path(PATH).parent.absolute()}/puller/files/{datetime.now().strftime("%H%M%S%f")}.json', 'w') as file:
     file.write(result)
 
 driver.close()
