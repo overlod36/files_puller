@@ -2,6 +2,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import requests
+from bs4 import BeautifulSoup
 from datetime import datetime
 from pathlib import Path
 import os
@@ -53,9 +55,10 @@ for data_url in years_data_urls:
         articles = []
         for j_el in journals_elems:
             file_name = j_el.find_element(By.CLASS_NAME, 'issue-item__content-right').find_element(By.TAG_NAME, 'a').text
-            file_details = j_el.find_element(By.CLASS_NAME, 'issue-item__detail').find_element(By.TAG_NAME, 'a').text
+            page_link = j_el.find_element(By.CLASS_NAME, 'issue-item__detail').find_element(By.TAG_NAME, 'a').text
+            file_link = URL[:19] + page_link[8:11] + '/pdf/' + page_link[16:]
             articles.append({'title': file_name,
-                             'link': file_details})
+                             'link': file_link})
         sp_journal['articles'] = articles
         # сохраняем журнал со статьями
         journals.append(sp_journal)

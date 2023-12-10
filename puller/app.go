@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -66,6 +67,23 @@ func open_file(filename string) ([]Journal, error) {
 	return journals, err
 }
 
+func download_file_by_link(link string, path string) error {
+	outfile, err := os.Create(path + "output.pdf")
+	if err != nil {
+		return err
+	}
+	defer outfile.Close()
+	response, err := http.Get(link)
+	if err != nil {
+		return err
+	}
+	_, err = io.Copy(outfile, response.Body)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func main() {
 	parse_files, err := get_parse_files_slice()
 	if err != nil {
@@ -87,8 +105,16 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	path_for_download, err := os.Getwd()
+	if err != nil {
+		fmt.Println(err)
+	}
+	path_for_download += "\\result\\"
 	for _, journal := range journals {
-		fmt.Printf("%+v\n", journal)
-		fmt.Println()
+		for _, article := range journal.Articles {
+			download_file_by_link(article.Link, path_for_download)
+			break
+		}
+		break
 	}
 }
