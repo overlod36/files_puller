@@ -2,23 +2,25 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-type Article struct {
-	title string
-	link  string
+type Journal struct {
+	Link     string    `json:"link"`
+	Title    string    `json:"title"`
+	Decade   string    `json:"decade"`
+	Year     string    `json:"year"`
+	Articles []Article `json:"articles"`
 }
 
-type Journal struct {
-	title    string
-	link     string
-	articles []Article
-	decade   int64
-	year     int64
+type Article struct {
+	Title string `json:"title"`
+	Link  string `json:"link"`
 }
 
 func get_parse_files_slice() ([]string, error) {
@@ -45,22 +47,23 @@ func get_parse_files_slice() ([]string, error) {
 	return files, err
 }
 
-func open_file(filename string) error {
+func open_file(filename string) ([]Journal, error) {
+	var journals []Journal
 	root, err := os.Getwd()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	file, err := os.Open(root + "\\files\\" + filename)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer file.Close()
-	scanner := bufio.NewScanner(file)
-
-	for scanner.Scan() {
-		fmt.Println(scanner.Text())
+	byte_value, err := io.ReadAll(file)
+	if err != nil {
+		return nil, err
 	}
-	return nil
+	json.Unmarshal(byte_value, &journals)
+	return journals, err
 }
 
 func main() {
@@ -80,8 +83,12 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	err = open_file(filename)
+	journals, err := open_file(filename)
 	if err != nil {
 		fmt.Println(err)
+	}
+	for _, journal := range journals {
+		fmt.Printf("%+v\n", journal)
+		fmt.Println()
 	}
 }

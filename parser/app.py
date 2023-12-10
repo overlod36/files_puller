@@ -41,25 +41,25 @@ for data_url in years_data_urls:
     
     # заполняем предварительный список журналов текущего года
     for journal in content:
-        current_year_journals.append({'href': journal.find_element(By.TAG_NAME, 'a').get_attribute('href'),
+        current_year_journals.append({'link': journal.find_element(By.TAG_NAME, 'a').get_attribute('href'),
                                      'title': f'{journal.find_element(By.CLASS_NAME, "coverDate").text}, {journal.find_element(By.CLASS_NAME, "issue").text}',
                                      'decade': data_url[1:5],
                                      'year': data_url[7:11]})
     
     # заходим на каждую страницу журнала, записываем ссылки на все доступные статьи
     for sp_journal in current_year_journals:
-        driver.get(sp_journal['href'])
+        driver.get(sp_journal['link'])
         journals_elems = driver.find_elements(By.CLASS_NAME, 'issue-item-container')
         articles = []
         for j_el in journals_elems:
             file_name = j_el.find_element(By.CLASS_NAME, 'issue-item__content-right').find_element(By.TAG_NAME, 'a').text
             file_details = j_el.find_element(By.CLASS_NAME, 'issue-item__detail').find_element(By.TAG_NAME, 'a').text
-            articles.append({file_name: file_details})
+            articles.append({'title': file_name,
+                             'link': file_details})
         sp_journal['articles'] = articles
-    # сохраняем статьи и прикрепляем их к журналу
-    journals.append(current_year_journals)
+        # сохраняем журнал со статьями
+        journals.append(sp_journal)
     break
-
 result = json.dumps(journals, indent=4)
 
 # запись в файл
