@@ -24,6 +24,10 @@ type Article struct {
 	Link  string `json:"link"`
 }
 
+func is_html(content_type string) bool {
+	return strings.HasPrefix(content_type, "text/html")
+}
+
 func get_parse_files_slice() ([]string, error) {
 	var files []string
 	root, err := os.Getwd()
@@ -32,11 +36,9 @@ func get_parse_files_slice() ([]string, error) {
 		return nil, err
 	}
 	err = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-
 		if err != nil {
 			return nil
 		}
-
 		if !info.IsDir() && filepath.Ext(path) == ".json" {
 			files = append(files, strings.ReplaceAll(path, root, ""))
 		}
@@ -67,8 +69,8 @@ func open_file(filename string) ([]Journal, error) {
 	return journals, err
 }
 
-func download_file_by_link(link string, path string) error {
-	outfile, err := os.Create(path + "output.pdf")
+func download_file(link string, title string, path string) error {
+	outfile, err := os.Create(path + title + ".pdf")
 	if err != nil {
 		return err
 	}
@@ -76,6 +78,11 @@ func download_file_by_link(link string, path string) error {
 	response, err := http.Get(link)
 	if err != nil {
 		return err
+	}
+	defer response.Body.Close()
+	if is_html(response.Header.Get("Content-Type")) {
+		fmt.Println("Oh sheesh")
+		return nil
 	}
 	_, err = io.Copy(outfile, response.Body)
 	if err != nil {
@@ -112,8 +119,10 @@ func main() {
 	path_for_download += "\\result\\"
 	for _, journal := range journals {
 		for _, article := range journal.Articles {
-			download_file_by_link(article.Link, path_for_download)
-			break
+			err := download_file(article.Link, article.Title, path_for_download)
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 		break
 	}
